@@ -1,5 +1,5 @@
 import { expect, test } from 'claude-code/testing'
-import { COLUMNAS, RENGLONES, dibujar } from '../hooks/maraña'
+import { BRASA, COLUMNAS, RENGLONES, celdas } from '../hooks/sticker'
 
 const PROPS = { version: '2.1.332', model: 'Opus 5.5', plan: 'Claude Ultra', cwd: '~/Documents/hilo', agent: 'hilo:hilo' }
 
@@ -15,11 +15,12 @@ test('una copia del encabezado va quieta', async $ => {
   await ui.unmount()
 })
 
-test('la maraña tiene su tamaño, la punta en brasa y quieta es siempre igual', () => {
-  const filas = dibujar(0, true)
+test('el sticker tiene su tamaño, la punta en brasa y quieto es siempre igual', () => {
+  const filas = celdas(0, true)
   expect(filas.length).toBe(RENGLONES)
-  for (const fila of filas) expect(fila.map(x => x.texto).join('').length).toBe(COLUMNAS)
-  expect(filas.flat().some(x => x.tono === 'brasa')).toBe(true)
-  expect(JSON.stringify(dibujar(5, true))).toBe(JSON.stringify(filas))
-  expect(JSON.stringify(dibujar(1.2, false))).not.toBe(JSON.stringify(dibujar(1.4, false)))
+  for (const fila of filas) expect(fila.length).toBe(COLUMNAS)
+  const brasa = (BRASA[0] << 16) | (BRASA[1] << 8) | BRASA[2]
+  expect(filas.flat().some(c => c.fg === brasa || c.bg === brasa)).toBe(true)
+  expect(JSON.stringify(celdas(5, true))).toBe(JSON.stringify(filas))
+  expect(JSON.stringify(celdas(1.2, false))).not.toBe(JSON.stringify(celdas(1.4, false)))
 })

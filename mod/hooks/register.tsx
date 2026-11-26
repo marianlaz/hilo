@@ -2,8 +2,8 @@ import type { Register, ThemeSetArgs } from 'claude-code'
 
 import { makeColors } from './make-colors.js'
 
-import { COLUMNAS, RENGLONES, dibujar } from './maraña'
 import { filas } from './ovillo'
+import { COLUMNAS, RENGLONES, celdas } from './sticker'
 
 // Conectores donde Mariano pidió preguntar siempre antes de mandar, borrar o publicar.
 const CONECTORES = /^mcp__claude_ai_(Notion|Slack|Google_Drive|Gmail|Google_Calendar|Atlassian_Rovo)__/
@@ -72,7 +72,7 @@ export const register: Register = on => {
       <Client key="ovillo" module="./ovillo.tsx" props={null} width={COLUMNAS} height={RENGLONES} />
     ) : (
       <Box flexDirection="column">
-        {filas(dibujar(0, true), Text)}
+        {filas(celdas(0, true), Text)}
       </Box>
     )
 
