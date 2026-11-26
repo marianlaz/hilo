@@ -2,17 +2,20 @@
 // y la hebra que sale abajo a la izquierda con la punta en brasa (los colores
 // de la marca). Se dibuja en píxeles, no en braille: cada celda de la terminal
 // son dos píxeles apilados (medios bloques ▀ ▄) con color de 24 bits, y cada
-// píxel se calcula con supermuestreo, así los trazos salen suaves aunque el
-// sticker sea chico. La hebra lleva un borde de papel alrededor de la tinta
-// para verse tanto en una terminal clara como en una oscura: el mod no sabe
-// cuál es (el tema es "auto").
+// píxel se decide con supermuestreo y queda en un color plano (papel, tinta o
+// brasa), como un pixel art: a este tamaño los grises intermedios ensucian.
+// Un píxel es más alto que ancho (ALTO): en la Terminal de Mariano, Geist
+// Mono con interlineado 1,1, mide 1,3 veces más. La hebra lleva un borde de
+// papel alrededor de la tinta para verse tanto en una terminal clara como en
+// una oscura: el mod no sabe cuál es (el tema es "auto").
 
 export type Celda = { ch: string; fg: number | null; bg: number | null }
 
-export const COLUMNAS = 20
+export const COLUMNAS = 22
 export const RENGLONES = 7
+export const ALTO = 1.3 // alto de un píxel, en anchos de píxel
 const W = COLUMNAS
-const H = RENGLONES * 2
+const H = RENGLONES * 2 * ALTO // alto del lienzo, en anchos de píxel
 
 export const PAPEL: RGB = [0xf3, 0xed, 0xe3]
 export const TINTA: RGB = [0x2a, 0x24, 0x1d]
@@ -20,7 +23,8 @@ export const BRASA: RGB = [0xc4, 0x70, 0x2e]
 
 type RGB = [number, number, number]
 type Punto = [number, number]
-type Trazo = { pts: Punto[]; w: number; a: number; col: RGB; clip?: boolean }
+type Tono = 'papel' | 'tinta' | 'brasa'
+type Trazo = { pts: Punto[]; w: number; tono: Tono; clip?: boolean }
 
 const SS = 5 // subsamples por lado de cada píxel
 
@@ -46,8 +50,8 @@ function distPoly(px: number, py: number, pts: Punto[]) {
 // La escena en el tiempo t (segundos): dónde está el disco y qué trazos lleva.
 function escena(t: number, quieto: boolean) {
   const s = quieto ? 0 : t
-  const cx = W * 0.62
-  const r = 5.6
+  const cx = W * 0.63
+  const r = 6.1
   // flota apenas, como en la web
   const cy = H * 0.46 + (quieto ? 0 : Math.sin(s * 2.4) * r * 0.05)
   const trazos: Trazo[] = []
@@ -73,7 +77,7 @@ function escena(t: number, quieto: boolean) {
         const a = base + (j / 24 - 0.5) * 2.2
         pts.push([kx + RB * Math.cos(a), ky + RB * Math.sin(a)])
       }
-      trazos.push({ pts, w: 0.46, a: 0.62, col: TINTA, clip: true })
+      trazos.push({ pts, w: 0.38, tono: 'tinta', clip: true })
     })
   })
 
@@ -84,7 +88,7 @@ function escena(t: number, quieto: boolean) {
     const rr = r * (1 + 0.04 * Math.sin(th * 3 + 1))
     ol.push([cx + rr * Math.cos(th), cy + rr * Math.sin(th)])
   }
-  trazos.push({ pts: ol, w: 0.65, a: 0.95, col: TINTA })
+  trazos.push({ pts: ol, w: 0.62, tono: 'tinta' })
 
   // la hebra: sale a 2,25 rad y baja a la izquierda con vaivén; la punta en brasa
   const ex = cx + r * Math.cos(2.25)
@@ -100,66 +104,47 @@ function escena(t: number, quieto: boolean) {
     const m = 1 - u
     hebra.push([m * m * ex + 2 * m * u * mx + u * u * bx, m * m * ey + 2 * m * u * my + u * u * by])
   }
-  trazos.push({ pts: hebra, w: 0.95, a: 1, col: PAPEL })
-  trazos.push({ pts: hebra.slice(0, 20), w: 0.45, a: 0.9, col: TINTA })
-  trazos.push({ pts: hebra.slice(19), w: 0.7, a: 1, col: BRASA })
+  trazos.push({ pts: hebra.slice(0, 23), w: 0.95, tono: 'papel' })
+  trazos.push({ pts: hebra.slice(0, 20), w: 0.5, tono: 'tinta' })
+  trazos.push({ pts: hebra.slice(19), w: 0.7, tono: 'brasa' })
 
   return { cx, cy, r, trazos }
 }
 
-// Los píxeles del sticker, W x H, cada uno [r, g, b, cobertura 0..1].
-export function pixeles(t: number, quieto: boolean): [number, number, number, number][] {
+// Los píxeles del sticker, W x (RENGLONES*2), cada uno un tono o null (nada).
+export function pixeles(t: number, quieto: boolean): (Tono | null)[] {
   const { cx, cy, r, trazos } = escena(t, quieto)
-  const out: [number, number, number, number][] = []
-  for (let y = 0; y < H; y++) {
+  const out: (Tono | null)[] = []
+  const n = SS * SS
+  for (let y = 0; y < RENGLONES * 2; y++) {
     for (let x = 0; x < W; x++) {
-      let R = 0
-      let G = 0
-      let B = 0
-      let A = 0
+      const cuenta = { papel: 0, tinta: 0, brasa: 0 }
       for (let sy = 0; sy < SS; sy++) {
         for (let sx = 0; sx < SS; sx++) {
           const px = x + (sx + 0.5) / SS
-          const py = y + (sy + 0.5) / SS
+          const py = (y + (sy + 0.5) / SS) * ALTO
           const d = Math.hypot(px - cx, py - cy)
-          // fondo: papel adentro del disco, nada afuera
-          let cr = 0
-          let cg = 0
-          let cb = 0
-          let ca = 0
-          if (d <= r + 0.3) {
-            cr = PAPEL[0]
-            cg = PAPEL[1]
-            cb = PAPEL[2]
-            ca = 1
-          }
+          // de abajo hacia arriba: el disco de papel, y encima cada trazo
+          let que: Tono | null = d <= r + 0.3 ? 'papel' : null
           for (const tr of trazos) {
             if (tr.clip && d > r * 0.97) continue
-            if (distPoly(px, py, tr.pts) > tr.w) continue
-            const a = tr.a
-            const na = a + ca * (1 - a)
-            cr = (cr * ca * (1 - a) + tr.col[0] * a) / na
-            cg = (cg * ca * (1 - a) + tr.col[1] * a) / na
-            cb = (cb * ca * (1 - a) + tr.col[2] * a) / na
-            ca = na
+            if (distPoly(px, py, tr.pts) <= tr.w) que = tr.tono
           }
-          R += cr * ca
-          G += cg * ca
-          B += cb * ca
-          A += ca
+          if (que) cuenta[que]++
         }
       }
-      out.push(A === 0 ? [0, 0, 0, 0] : [R / A, G / A, B / A, A / (SS * SS)])
+      const total = cuenta.papel + cuenta.tinta + cuenta.brasa
+      if (cuenta.brasa >= n * 0.3) out.push('brasa')
+      else if (cuenta.tinta >= n * 0.4) out.push('tinta')
+      else if (total >= n * 0.5) out.push('papel')
+      else out.push(null)
     }
   }
   return out
 }
 
-const hex = (p: number[]) => (Math.round(p[0]!) << 16) | (Math.round(p[1]!) << 8) | Math.round(p[2]!)
-
-// Un píxel medio transparente sobre un fondo que no conocemos: se muestra si
-// cubre más de la mitad, y si no queda vacío. Así no inventamos un fondo.
-const visible = (p: number[]) => p[3]! >= 0.45
+const RGBS: Record<Tono, RGB> = { papel: PAPEL, tinta: TINTA, brasa: BRASA }
+const hex = (q: Tono) => (RGBS[q][0] << 16) | (RGBS[q][1] << 8) | RGBS[q][2]
 
 // Las celdas de la terminal: RENGLONES filas de COLUMNAS celdas, cada una un
 // medio bloque con su color de frente y de fondo (null es el de la terminal).
@@ -171,11 +156,9 @@ export function celdas(t: number, quieto: boolean): Celda[][] {
     for (let col = 0; col < COLUMNAS; col++) {
       const arriba = px[row * 2 * W + col]!
       const abajo = px[(row * 2 + 1) * W + col]!
-      const va = visible(arriba)
-      const vb = visible(abajo)
-      if (va && vb) fila.push({ ch: '▀', fg: hex(arriba), bg: hex(abajo) })
-      else if (va) fila.push({ ch: '▀', fg: hex(arriba), bg: null })
-      else if (vb) fila.push({ ch: '▄', fg: hex(abajo), bg: null })
+      if (arriba && abajo) fila.push({ ch: '▀', fg: hex(arriba), bg: hex(abajo) })
+      else if (arriba) fila.push({ ch: '▀', fg: hex(arriba), bg: null })
+      else if (abajo) fila.push({ ch: '▄', fg: hex(abajo), bg: null })
       else fila.push({ ch: ' ', fg: null, bg: null })
     }
     filas.push(fila)
