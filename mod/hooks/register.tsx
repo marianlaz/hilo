@@ -3,7 +3,7 @@ import type { Register, ThemeSetArgs } from 'claude-code'
 import { makeColors } from './make-colors.js'
 
 import { filas } from './ovillo'
-import { COLUMNAS, RENGLONES, celdas } from './emoji'
+import { COLUMNAS, RENGLONES, celdas } from './lapiz'
 
 // Conectores donde Mariano pidió preguntar siempre antes de mandar, borrar o publicar.
 const CONECTORES = /^mcp__claude_ai_(Notion|Slack|Google_Drive|Gmail|Google_Calendar|Atlassian_Rovo)__/

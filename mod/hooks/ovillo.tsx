@@ -1,12 +1,16 @@
 import type { ClientModule } from 'claude-code'
 
-import { PASO, aHex, celdas, type Celda } from './emoji'
+import { aHex, celdas, type Celda } from './lapiz'
 
-// Corre en la terminal: pasa al cuadro siguiente cada PASO ms (el ovillo
-// flota). Con "reducir movimiento" o sin foco en la ventana, quieto.
+// Corre en la terminal: redibuja el ovillo cada PASO ms (flota, las vueltas
+// giran despacio y la hebra se mece). Con "reducir movimiento" o sin foco en
+// la ventana, quieto.
+
+const PASO = 200
 
 // Cada fila de celdas, en tramos: celdas vecinas con el mismo frente y fondo
-// van en un solo Text.
+// van en un solo Text. Sin color de frente es tinta: el color de texto de la
+// terminal, atenuado.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function filas(lista: Celda[][], Text: any) {
   return lista.map((fila, i) => {
@@ -23,6 +27,7 @@ export function filas(lista: Celda[][], Text: any) {
             key={`t${j}`}
             color={t.fg === null ? undefined : aHex(t.fg)}
             backgroundColor={t.bg === null ? undefined : aHex(t.bg)}
+            dimColor={t.fg === null && t.bg === null}
           >
             {t.texto}
           </Text>
