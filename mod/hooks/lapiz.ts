@@ -39,7 +39,7 @@ const CUADROS = [
   ],
 ]
 
-export const COLUMNAS = CUADROS[0]![0]!.length
+export const COLUMNAS = Math.max(...CUADROS.flat().map(l => l.length))
 export const RENGLONES = CUADROS[0]!.length
 export const PASO = 400 // ms entre cuadros
 
@@ -48,7 +48,7 @@ const HEBRA_HASTA = 9 // la hebra ocupa las columnas 0 a 8 del último renglón
 export function celdas(t: number, quieto: boolean): Celda[][] {
   const k = quieto ? 0 : Math.floor(t / (PASO / 1000)) % CUADROS.length
   return CUADROS[k]!.map((linea, row) =>
-    Array.from(linea, (ch, col) => {
+    Array.from(linea.padEnd(COLUMNAS), (ch, col) => {
       if (ch === ' ') return { ch, fg: null, bg: null }
       const hebra = row === RENGLONES - 1 && col < HEBRA_HASTA
       return { ch, fg: hebra ? BRASA : SUNSET[row]!, bg: null }
