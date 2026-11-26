@@ -1,12 +1,9 @@
 import type { ClientModule } from 'claude-code'
 
-import { aHex, celdas, type Celda } from './lapiz'
+import { PASO, aHex, celdas, type Celda } from './lapiz'
 
-// Corre en la terminal: redibuja el ovillo cada PASO ms (flota, las vueltas
-// giran despacio y la hebra se mece). Con "reducir movimiento" o sin foco en
-// la ventana, quieto.
-
-const PASO = 200
+// Corre en la terminal: pasa al cuadro siguiente cada PASO ms. Con "reducir
+// movimiento" o sin foco en la ventana, quieto.
 
 // Cada fila de celdas, en tramos: celdas vecinas con el mismo frente y fondo
 // van en un solo Text. Sin color de frente es tinta: el color de texto de la
