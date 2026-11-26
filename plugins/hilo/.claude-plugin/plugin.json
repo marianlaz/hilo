@@ -1,0 +1,7 @@
+{
+  "name": "hilo",
+  "version": "0.1.0",
+  "description": "Hilo: lee lo que escribís y lo convierte en algo. Un agente personal para Claude Code, con casa propia.",
+  "author": { "name": "Mariano" },
+  "keywords": ["hilo", "agente", "personal", "escribir"]
+}

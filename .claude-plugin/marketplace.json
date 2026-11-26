@@ -1,0 +1,23 @@
+{
+  "name": "hilo",
+  "owner": {
+    "name": "Mariano"
+  },
+  "metadata": {
+    "description": "Hilo: el agente que labura con Mariano, y su mod para Claude Code.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "hilo",
+      "source": "./plugins/hilo",
+      "description": "Hilo: el agente, sus skills y su forma de escribir."
+    },
+    {
+      "name": "hilo-mod",
+      "source": "./mod",
+      "description": "El ovillo en el encabezado de la terminal, el tema Sunset y preguntar siempre antes de escribir en Notion, Slack, Drive, Gmail, Calendar o Jira.",
+      "version": "0.2.0"
+    }
+  ]
+}

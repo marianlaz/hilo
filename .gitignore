@@ -1,0 +1,14 @@
+# Solo el producto va a git: el instalador, el lanzador, el plugin y el mod.
+# La casa (ficha, mind/, cuerpos, notas) se queda en la Mac y viaja copiando la carpeta.
+/*
+!/.gitignore
+!/README.md
+!/LICENSE
+!/install.sh
+!/bin/
+!/.claude-plugin/
+!/plugins/
+!/mod/
+mod/.claude-plugin/types/
+mod/node_modules/
+.DS_Store

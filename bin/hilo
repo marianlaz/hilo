@@ -1,0 +1,25 @@
+#!/bin/sh
+# Hilo en la terminal. Todo vive en esta carpeta: el plugin (plugins/hilo), el mod (mod/), la mente (mind/) y la ficha.
+# Rutas relativas a este archivo: la carpeta se copia a otra Mac y sigue andando (solo pide login de nuevo).
+set -e
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+MIND="$ROOT/mind"
+PLANTILLAS="$ROOT/plugins/hilo/plantillas"
+
+# Primera vez en esta casa: la ficha y la mente nacen de las plantillas del plugin. Si ya están, no se tocan.
+[ -f "$ROOT/ficha.json" ] || printf '{\n  "persona": "",\n  "personaje": "Hilo",\n  "primeraVez": true\n}\n' > "$ROOT/ficha.json"
+if [ ! -f "$MIND/CLAUDE.md" ]; then
+  PERSONA=$(sed -n 's/.*"persona": *"\([^"]*\)".*/\1/p' "$ROOT/ficha.json")
+  PERSONAJE=$(sed -n 's/.*"personaje": *"\([^"]*\)".*/\1/p' "$ROOT/ficha.json")
+  mkdir -p "$MIND"
+  sed -e "s/{{persona}}/${PERSONA:-la persona}/g" -e "s/{{personaje}}/${PERSONAJE:-Hilo}/g" "$PLANTILLAS/mente.md" > "$MIND/CLAUDE.md"
+fi
+[ -f "$MIND/settings.json" ] || cp "$PLANTILLAS/settings.json" "$MIND/settings.json"
+mkdir -p "$MIND/skills"
+
+# Claude guarda las conversaciones en mind/projects/<ruta con guiones>/. "sessions" en la raíz apunta ahí.
+SLUG=$(printf '%s' "$ROOT" | sed 's#[^A-Za-z0-9]#-#g')
+mkdir -p "$MIND/projects/$SLUG"
+ln -sfn "mind/projects/$SLUG" "$ROOT/sessions"
+cd "$ROOT"
+CLAUDE_CONFIG_DIR="$MIND" exec claude --plugin-dir "$ROOT/plugins/hilo" --plugin-dir "$ROOT/mod" --agent hilo:hilo "$@"

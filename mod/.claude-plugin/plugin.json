@@ -1,0 +1,7 @@
+{
+  "name": "hilo-mod",
+  "version": "0.2.0",
+  "description": "El ovillo en el encabezado de la terminal, el tema Sunset y preguntar siempre antes de escribir en Notion, Slack, Drive, Gmail, Calendar o Jira.",
+  "author": { "name": "Mariano" },
+  "keywords": ["hilo", "mod", "ovillo", "sunset"]
+}
