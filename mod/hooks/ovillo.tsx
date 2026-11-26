@@ -1,12 +1,9 @@
 import type { ClientModule } from 'claude-code'
 
-import { aHex, celdas, type Celda } from './sticker'
+import { PASO, aHex, celdas, type Celda } from './emoji'
 
-// Corre en la terminal: redibuja el sticker cada 200 ms (el ovillo flota, las
-// vueltas se corren y la hebra se mece). Con "reducir movimiento" o sin foco
-// en la ventana, quieto.
-
-const PASO = 200
+// Corre en la terminal: pasa al cuadro siguiente cada PASO ms (el ovillo
+// flota). Con "reducir movimiento" o sin foco en la ventana, quieto.
 
 // Cada fila de celdas, en tramos: celdas vecinas con el mismo frente y fondo
 // van en un solo Text.
